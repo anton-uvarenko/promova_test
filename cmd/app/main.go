@@ -1,14 +1,21 @@
 package main
 
 import (
+	"github.com/anton-uvarenko/promova_test/internal/core"
+	"github.com/anton-uvarenko/promova_test/internal/db"
 	"github.com/anton-uvarenko/promova_test/internal/pkg/server"
 	"github.com/anton-uvarenko/promova_test/internal/service"
 	"github.com/anton-uvarenko/promova_test/internal/transport"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	appService := service.NewService()
-	handler := transport.NewHandler(appService)
+	godotenv.Load()
+	conn := db.Connect()
+	repo := core.New(conn)
+
+	appService := service.NewService(repo)
+	handler := transport.NewHandler(appService.NewsService)
 
 	router := server.SetUpRoutes(handler)
 	httpServer := server.NewServer(router)

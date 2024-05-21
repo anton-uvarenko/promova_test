@@ -1,7 +1,11 @@
 package service
 
-type Service struct{}
+type Service struct {
+	NewsService *NewsService
+}
 
-func NewService() *Service {
-	return &Service{}
+func NewService(newsRepo newsRepo) *Service {
+	return &Service{
+		NewsService: NewNewsService(newsRepo),
+	}
 }

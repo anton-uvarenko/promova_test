@@ -1,9 +1,11 @@
 package transport
 
-import "github.com/anton-uvarenko/promova_test/internal/service"
+type Handler struct {
+	NewsHandler *NewsHandler
+}
 
-type Handler struct{}
-
-func NewHandler(service *service.Service) *Handler {
-	return &Handler{}
+func NewHandler(newsService newsService) *Handler {
+	return &Handler{
+		NewsHandler: NewNewsHandler(newsService),
+	}
 }

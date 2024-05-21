@@ -16,5 +16,8 @@ func NewServer(handler http.Handler) *http.Server {
 
 func SetUpRoutes(handler *transport.Handler) http.Handler {
 	router := gin.New()
+
+	router.POST("/posts", handler.NewsHandler.AddNews)
+
 	return router
 }
