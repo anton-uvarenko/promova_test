@@ -49,7 +49,7 @@ func (q *Queries) DeleteNews(ctx context.Context, id int32) error {
 }
 
 const getAllNews = `-- name: GetAllNews :many
-SELECT id, title, content, created_at, update_at FROM news
+SELECT id, title, content, created_at, updated_at FROM news
 `
 
 func (q *Queries) GetAllNews(ctx context.Context) ([]News, error) {
@@ -66,7 +66,7 @@ func (q *Queries) GetAllNews(ctx context.Context) ([]News, error) {
 			&i.Title,
 			&i.Content,
 			&i.CreatedAt,
-			&i.UpdateAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -79,7 +79,7 @@ func (q *Queries) GetAllNews(ctx context.Context) ([]News, error) {
 }
 
 const getNewsById = `-- name: GetNewsById :one
-SELECT id, title, content, created_at, update_at FROM news
+SELECT id, title, content, created_at, updated_at FROM news
 WHERE id = $1
 `
 
@@ -91,7 +91,7 @@ func (q *Queries) GetNewsById(ctx context.Context, id int32) (News, error) {
 		&i.Title,
 		&i.Content,
 		&i.CreatedAt,
-		&i.UpdateAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }

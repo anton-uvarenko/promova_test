@@ -6,4 +6,5 @@ const (
 	InvalidPayload        = 0o03
 	EntityAlreadyExists   = 0o04
 	InternalError         = 0o05
+	NotFound              = 0o06
 )

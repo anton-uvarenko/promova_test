@@ -13,5 +13,5 @@ type News struct {
 	Title     pgtype.Text
 	Content   pgtype.Text
 	CreatedAt pgtype.Timestamp
-	UpdateAt  pgtype.Timestamp
+	UpdatedAt pgtype.Timestamp
 }
