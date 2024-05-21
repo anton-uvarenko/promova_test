@@ -3,6 +3,7 @@ package transport
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/anton-uvarenko/promova_test/internal/core"
@@ -28,14 +29,17 @@ type newsService interface {
 
 func (h *NewsHandler) AddNews(ctx *gin.Context) {
 	type AddNewsPayload struct {
-		Title   string `json:"title"`
-		Content string `json:"content"`
+		Title   string `json:"title" binding:"required,gt=2,lt=50"`
+		Content string `json:"content" binding:"required"`
 	}
 
 	var payload AddNewsPayload
 	err := ctx.ShouldBindJSON(&payload)
 	if err != nil {
-		ctx.AbortWithStatus(http.StatusBadRequest)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Response{
+			Code:  response.InvalidPayload,
+			Error: fmt.Errorf("%w: [%w]", pkg.ErrInvalidPayload, err).Error(),
+		})
 		return
 	}
 
