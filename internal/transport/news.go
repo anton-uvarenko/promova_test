@@ -8,6 +8,7 @@ import (
 
 	"github.com/anton-uvarenko/promova_test/internal/core"
 	"github.com/anton-uvarenko/promova_test/internal/pkg"
+	"github.com/anton-uvarenko/promova_test/internal/pkg/payload"
 	"github.com/anton-uvarenko/promova_test/internal/pkg/response"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -32,13 +33,8 @@ type newsService interface {
 }
 
 func (h *NewsHandler) AddNews(ctx *gin.Context) {
-	type AddNewsPayload struct {
-		Title   string `json:"title" binding:"required,gt=2,lt=50"`
-		Content string `json:"content" binding:"required"`
-	}
-
-	var payload AddNewsPayload
-	err := ctx.ShouldBindJSON(&payload)
+	var pl payload.AddNewsPayload
+	err := ctx.ShouldBindJSON(&pl)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Response{
 			Code:  response.InvalidPayload,
@@ -48,8 +44,8 @@ func (h *NewsHandler) AddNews(ctx *gin.Context) {
 	}
 
 	id, err := h.newsService.AddNews(ctx, core.AddNewsParams{
-		Title:   pgtype.Text{String: payload.Title, Valid: true},
-		Content: pgtype.Text{String: payload.Content, Valid: true},
+		Title:   pgtype.Text{String: pl.Title, Valid: true},
+		Content: pgtype.Text{String: pl.Content, Valid: true},
 	})
 	if err != nil {
 		if errors.Is(err, pkg.ErrEntityAlreadyExists) {
@@ -60,7 +56,10 @@ func (h *NewsHandler) AddNews(ctx *gin.Context) {
 			return
 		}
 
-		ctx.AbortWithStatus(http.StatusInternalServerError)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, response.Response{
+			Code:  response.InternalError,
+			Error: pkg.ErrDbInternal.Error(),
+		})
 		return
 	}
 
@@ -73,13 +72,8 @@ func (h *NewsHandler) AddNews(ctx *gin.Context) {
 }
 
 func (h *NewsHandler) UpdateNews(ctx *gin.Context) {
-	type UpdateNewsPayload struct {
-		Title   string `json:"title" binding:"required,gt=2,lt=50"`
-		Content string `json:"content" binding:"required"`
-	}
-
-	var payload UpdateNewsPayload
-	err := ctx.ShouldBindJSON(&payload)
+	var pl payload.UpdateNewsPayload
+	err := ctx.ShouldBindJSON(&pl)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Response{
 			Code:  response.InvalidPayload,
@@ -88,10 +82,7 @@ func (h *NewsHandler) UpdateNews(ctx *gin.Context) {
 		return
 	}
 
-	type UriPayload struct {
-		Id int `uri:"id"`
-	}
-	var uriPayload UriPayload
+	var uriPayload payload.IdUriPayload
 	err = ctx.ShouldBindUri(&uriPayload)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Response{
@@ -103,8 +94,8 @@ func (h *NewsHandler) UpdateNews(ctx *gin.Context) {
 
 	err = h.newsService.UpdatNews(ctx, core.UpdateNewsParams{
 		ID:      int32(uriPayload.Id),
-		Title:   pgtype.Text{String: payload.Title, Valid: true},
-		Content: pgtype.Text{String: payload.Content, Valid: true},
+		Title:   pgtype.Text{String: pl.Title, Valid: true},
+		Content: pgtype.Text{String: pl.Content, Valid: true},
 	})
 	if err != nil {
 		if errors.Is(err, pkg.ErrNotFound) {
@@ -122,14 +113,13 @@ func (h *NewsHandler) UpdateNews(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Status(http.StatusOK)
+	ctx.JSON(http.StatusOK, response.Response{
+		Code: response.Ok,
+	})
 }
 
 func (h *NewsHandler) GetNewsById(ctx *gin.Context) {
-	type UriPayload struct {
-		Id int `uri:"id"`
-	}
-	var uriPayload UriPayload
+	var uriPayload payload.IdUriPayload
 	err := ctx.ShouldBindUri(&uriPayload)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Response{
@@ -148,11 +138,21 @@ func (h *NewsHandler) GetNewsById(ctx *gin.Context) {
 			})
 			return
 		}
+
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, response.Response{
+			Code:  response.InternalError,
+			Error: pkg.ErrDbInternal.Error(),
+		})
+		return
 	}
 
 	ctx.JSON(http.StatusOK, response.Response{
 		Code: response.Ok,
-		Data: news,
+		Data: response.NewsData{
+			Id:      int(news.ID),
+			Title:   news.Title.String,
+			Content: news.Content.String,
+		},
 	})
 }
 
@@ -166,19 +166,31 @@ func (h *NewsHandler) GetAllNews(ctx *gin.Context) {
 			})
 			return
 		}
+
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, response.Response{
+			Code:  response.InternalError,
+			Error: pkg.ErrDbInternal.Error(),
+		})
+		return
+	}
+
+	resultData := []response.NewsData{}
+	for _, v := range news {
+		resultData = append(resultData, response.NewsData{
+			Id:      int(v.ID),
+			Title:   v.Title.String,
+			Content: v.Content.String,
+		})
 	}
 
 	ctx.JSON(http.StatusOK, response.Response{
 		Code: response.Ok,
-		Data: news,
+		Data: resultData,
 	})
 }
 
 func (h *NewsHandler) DeleteNews(ctx *gin.Context) {
-	type UriPayload struct {
-		Id int `uri:"id"`
-	}
-	var uriPayload UriPayload
+	var uriPayload payload.IdUriPayload
 	err := ctx.BindUri(&uriPayload)
 	if err != nil {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, response.Response{
@@ -197,7 +209,15 @@ func (h *NewsHandler) DeleteNews(ctx *gin.Context) {
 			})
 			return
 		}
+
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, response.Response{
+			Code:  response.InternalError,
+			Error: pkg.ErrDbInternal.Error(),
+		})
+		return
 	}
 
-	ctx.Status(http.StatusOK)
+	ctx.JSON(http.StatusOK, response.Response{
+		Code: response.Ok,
+	})
 }

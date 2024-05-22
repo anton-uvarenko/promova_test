@@ -17,8 +17,8 @@ func main() {
 	appService := service.NewService(repo)
 	handler := transport.NewHandler(appService.NewsService)
 
-	router := server.SetUpRoutes(handler)
-	httpServer := server.NewServer(router)
+	router := server.SetUpRoutes(handler.NewsHandler)
+	httpServer := server.NewServer(router, "8080")
 
 	httpServer.ListenAndServe()
 }
