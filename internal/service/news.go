@@ -93,7 +93,7 @@ func (s *NewsService) GetNewsById(ctx context.Context, id int32) (core.News, err
 }
 
 func (s *NewsService) DeleteNews(ctx context.Context, id int32) error {
-	_, err := s.GetNewsById(ctx, id)
+	_, err := s.newsRepo.GetNewsById(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return pkg.ErrEntityAlreadyDeleted
