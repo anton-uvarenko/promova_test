@@ -1,6 +1,11 @@
 package main
 
 import (
+	"context"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/anton-uvarenko/promova_test/internal/core"
 	"github.com/anton-uvarenko/promova_test/internal/db"
 	"github.com/anton-uvarenko/promova_test/internal/pkg/server"
@@ -20,5 +25,11 @@ func main() {
 	router := server.SetUpRoutes(handler.NewsHandler)
 	httpServer := server.NewServer(router, "8080")
 
-	httpServer.ListenAndServe()
+	go httpServer.ListenAndServe()
+	finish := make(chan os.Signal, 1)
+	signal.Notify(finish, os.Interrupt, syscall.SIGTERM)
+
+	<-finish
+
+	conn.Close(context.Background())
 }
