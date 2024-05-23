@@ -106,6 +106,14 @@ func (h *NewsHandler) UpdateNews(ctx *gin.Context) {
 			return
 		}
 
+		if errors.Is(err, pkg.ErrEntityAlreadyExists) {
+			ctx.AbortWithStatusJSON(http.StatusConflict, response.Response{
+				Code:  response.EntityAlreadyExists,
+				Error: pkg.ErrEntityAlreadyExists.Error(),
+			})
+			return
+		}
+
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, response.Response{
 			Code:  response.InternalError,
 			Error: pkg.ErrDbInternal.Error(),

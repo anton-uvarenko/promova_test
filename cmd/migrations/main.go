@@ -13,11 +13,12 @@ import (
 func main() {
 	godotenv.Load()
 	m, err := migrate.New(
-		"file://migrations/schema",
+		"file:///home/migrations/schema",
 		os.Getenv("MIGRATIONS_CONNECTION_STRING"),
 	)
 	if err != nil {
 		log.Fatal("can't run migrations: ", err)
+		os.Exit(1)
 	}
 
 	m.Up()

@@ -109,32 +109,41 @@ func TestUpdatNews(t *testing.T) {
 	service := NewNewsService(repo)
 
 	testTable := []struct {
-		Name                string
-		ErrRepoShouldReturn error
-		ExpectedError       error
+		Name                      string
+		ErrUpdateNewsShouldReturn error
+		ErrGetNewsByIdToReturn    error
+		ExpectedError             error
 	}{
 		{
-			Name:                "Ok",
-			ErrRepoShouldReturn: nil,
-			ExpectedError:       nil,
+			Name:                      "Ok",
+			ErrUpdateNewsShouldReturn: nil,
+			ExpectedError:             nil,
+		},
+		{
+			Name:                      "Err not found",
+			ErrUpdateNewsShouldReturn: nil,
+			ErrGetNewsByIdToReturn:    pgx.ErrNoRows,
+			ExpectedError:             pkg.ErrNotFound,
 		},
 		{
 			Name: "Err duplicate key",
-			ErrRepoShouldReturn: &pgconn.PgError{
+			ErrUpdateNewsShouldReturn: &pgconn.PgError{
 				Code: "23505",
 			},
 			ExpectedError: pkg.ErrEntityAlreadyExists,
 		},
 		{
-			Name:                "Err db internal",
-			ErrRepoShouldReturn: errors.New("some unexpected error"),
-			ExpectedError:       pkg.ErrDbInternal,
+			Name:                      "Err db internal",
+			ErrUpdateNewsShouldReturn: errors.New("some unexpected error"),
+			ExpectedError:             pkg.ErrDbInternal,
 		},
 	}
 
 	for _, testCase := range testTable {
 		t.Run(testCase.Name, func(t *testing.T) {
-			repo.ErrUpdateNewsToReturn = testCase.ErrRepoShouldReturn
+			repo.ErrUpdateNewsToReturn = testCase.ErrUpdateNewsShouldReturn
+			repo.ErrGetNewsByIdToReturn = testCase.ErrGetNewsByIdToReturn
+
 			err := service.UpdatNews(context.Background(), core.UpdateNewsParams{})
 			assert.Equal(t, errors.Is(err, testCase.ExpectedError), true)
 		})

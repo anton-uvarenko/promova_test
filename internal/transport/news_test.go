@@ -89,7 +89,7 @@ func TestMain(m *testing.M) {
 	newsServiceInstance = &newsServiceMock{}
 	handler := NewHandler(newsServiceInstance)
 	router := server.SetUpRoutes(handler.NewsHandler)
-	httpServer := server.NewServer(router, "8080")
+	httpServer := server.NewServer(router, "8081")
 	go httpServer.ListenAndServe()
 
 	m.Run()
@@ -170,7 +170,7 @@ func TestAddNews(t *testing.T) {
 			newsServiceInstance.ErrAddNewsToReturn = testCase.ErrorServiceShouldReturn
 			pl, _ := json.Marshal(testCase.RequestPayload)
 
-			r, _ := http.NewRequest(http.MethodPost, "http://localhost:8080/posts", bytes.NewBuffer(pl))
+			r, _ := http.NewRequest(http.MethodPost, "http://localhost:8081/posts", bytes.NewBuffer(pl))
 			resp, _ := http.DefaultClient.Do(r)
 
 			assert.Equal(t, resp.StatusCode, testCase.ExpectedStatusCode)
@@ -265,6 +265,19 @@ func TestUpdateNews(t *testing.T) {
 			ExpectedStatusCode: http.StatusNotFound,
 		},
 		{
+			Name: "Error entity already exists",
+			RequestPayload: payload.UpdateNewsPayload{
+				Title:   "some title",
+				Content: "some content",
+			},
+			UriParam:                 "1",
+			ErrorServiceShouldReturn: pkg.ErrEntityAlreadyExists,
+			ExpectedResult: response.Response{
+				Code: response.EntityAlreadyExists,
+			},
+			ExpectedStatusCode: http.StatusConflict,
+		},
+		{
 			Name: "Error db internal",
 			RequestPayload: payload.UpdateNewsPayload{
 				Title:   "some title",
@@ -284,7 +297,7 @@ func TestUpdateNews(t *testing.T) {
 			newsServiceInstance.ErrUpdateNewsToReturn = testCase.ErrorServiceShouldReturn
 			pl, _ := json.Marshal(testCase.RequestPayload)
 
-			r, _ := http.NewRequest(http.MethodPut, "http://localhost:8080/posts/"+testCase.UriParam, bytes.NewBuffer(pl))
+			r, _ := http.NewRequest(http.MethodPut, "http://localhost:8081/posts/"+testCase.UriParam, bytes.NewBuffer(pl))
 			resp, _ := http.DefaultClient.Do(r)
 
 			assert.Equal(t, resp.StatusCode, testCase.ExpectedStatusCode)
@@ -362,7 +375,7 @@ func TestGetNewsById(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			newsServiceInstance.ErrGetNewsByIdToReturn = testCase.ErrorServiceShouldReturn
 
-			r, _ := http.NewRequest(http.MethodGet, "http://localhost:8080/posts/"+testCase.UriParam, nil)
+			r, _ := http.NewRequest(http.MethodGet, "http://localhost:8081/posts/"+testCase.UriParam, nil)
 			resp, _ := http.DefaultClient.Do(r)
 
 			assert.Equal(t, resp.StatusCode, testCase.ExpectedStatusCode)
@@ -432,7 +445,7 @@ func TestGetAllNews(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			newsServiceInstance.ErrGetAllNewsToReturn = testCase.ErrorServiceShouldReturn
 
-			r, _ := http.NewRequest(http.MethodGet, "http://localhost:8080/posts", nil)
+			r, _ := http.NewRequest(http.MethodGet, "http://localhost:8081/posts", nil)
 			resp, _ := http.DefaultClient.Do(r)
 
 			assert.Equal(t, resp.StatusCode, testCase.ExpectedStatusCode)
@@ -503,7 +516,7 @@ func TestDeleteNews(t *testing.T) {
 		t.Run(testCase.Name, func(t *testing.T) {
 			newsServiceInstance.ErrDeleteNewsToReturn = testCase.ErrorServiceShouldReturn
 
-			r, _ := http.NewRequest(http.MethodDelete, "http://localhost:8080/posts/"+testCase.UriParam, nil)
+			r, _ := http.NewRequest(http.MethodDelete, "http://localhost:8081/posts/"+testCase.UriParam, nil)
 			resp, _ := http.DefaultClient.Do(r)
 
 			assert.Equal(t, resp.StatusCode, testCase.ExpectedStatusCode)

@@ -49,7 +49,17 @@ func (s *NewsService) AddNews(ctx context.Context, params core.AddNewsParams) (i
 }
 
 func (s *NewsService) UpdatNews(ctx context.Context, params core.UpdateNewsParams) error {
-	err := s.newsRepo.UpdateNews(ctx, params)
+	_, err := s.newsRepo.GetNewsById(ctx, params.ID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return pkg.ErrNotFound
+		}
+
+		fmt.Printf("%v: [%v]\n", pkg.ErrDbInternal, err)
+		return fmt.Errorf("%w: [%w]", pkg.ErrDbInternal, err)
+	}
+
+	err = s.newsRepo.UpdateNews(ctx, params)
 	if err != nil {
 		var pgError *pgconn.PgError
 		if errors.As(err, &pgError) {
